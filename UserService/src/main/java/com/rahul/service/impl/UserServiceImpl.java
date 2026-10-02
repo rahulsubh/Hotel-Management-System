@@ -39,13 +39,13 @@ public class UserServiceImpl implements UserService {
         return users.stream().map(user -> {
             //fetch rating from the above user
             Rating[] rating = restTemplate.getForObject(
-                    "http://localhost:8083/ratings/users/" + user.getUserId(),
+                    "http://RATING-SERVICE/ratings/users/" + user.getUserId(),
                     Rating[].class);
             List<Rating> ratingList1 = Arrays.stream(rating).toList();
             List<Rating> ratingList = ratingList1.stream().map(ratingOfUser -> {
                 //api call to hotel service to get the hotel
                 ResponseEntity<Hotel> forEntity = restTemplate.getForEntity(
-                        "http://localhost:8082/hotels/" + ratingOfUser.getHotelId(),
+                        "http://HOTEL-SERVICE/hotels/" + ratingOfUser.getHotelId(),
                         Hotel.class
                 );
                 Hotel hotel = forEntity.getBody();
@@ -63,7 +63,7 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
         //fetch rating from the above user
         Rating[] ratings = restTemplate.getForObject(
-                "http://localhost:8083/ratings/users/" + user.getUserId()
+                "http://RATING-SERVICE/ratings/users/" + user.getUserId()
                 , Rating[].class);
         List<Rating> ratingList1 = Arrays.stream(ratings).toList();
         log.info("Ratings for user {}: {}", user.getUserId(), ratings);
@@ -71,7 +71,7 @@ public class UserServiceImpl implements UserService {
             String hotelId = rating.getHotelId();
             //api call to hotel service to get the hotel
             ResponseEntity<Hotel> forEntity = restTemplate.getForEntity(
-                    "http://localhost:8082/hotels/" + hotelId,
+                    "http://HOTEL-SERVICE/hotels/" + hotelId,
                     Hotel.class
             );
             Hotel hotel = forEntity.getBody();
