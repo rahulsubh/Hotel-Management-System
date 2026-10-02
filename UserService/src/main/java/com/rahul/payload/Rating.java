@@ -5,6 +5,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -15,4 +17,6 @@ public class Rating {
     private String hotelId;
     private int rating;
     private int feedback;
+
+    private List<Hotel> hotels;
 }
