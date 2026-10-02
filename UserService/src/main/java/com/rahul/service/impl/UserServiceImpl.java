@@ -2,10 +2,13 @@ package com.rahul.service.impl;
 
 import com.rahul.entities.User;
 import com.rahul.exceptions.ResourceNotFoundException;
+import com.rahul.payload.Hotel;
+import com.rahul.payload.Rating;
 import com.rahul.repository.UserRepository;
 import com.rahul.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -34,10 +37,22 @@ public class UserServiceImpl implements UserService {
     public List<User> getAllUsers() {
         List<User> users = userRepository.findAll();
         return users.stream().map(user -> {
-            ArrayList ratingOfUser = restTemplate.getForObject(
+            //fetch rating from the above user
+            Rating[] rating = restTemplate.getForObject(
                     "http://localhost:8083/ratings/users/" + user.getUserId(),
-                    ArrayList.class);
-            user.setRatings(ratingOfUser);
+                    Rating[].class);
+            List<Rating> ratingList1 = Arrays.stream(rating).toList();
+            List<Rating> ratingList = ratingList1.stream().map(ratingOfUser -> {
+                //api call to hotel service to get the hotel
+                ResponseEntity<Hotel> forEntity = restTemplate.getForEntity(
+                        "http://localhost:8082/hotels/" + ratingOfUser.getHotelId(),
+                        Hotel.class
+                );
+                Hotel hotel = forEntity.getBody();
+                ratingOfUser.setHotel(hotel);
+                return ratingOfUser;
+            }).toList();
+            user.setRatings(ratingList);
             return user;
         }).toList();
     }
@@ -47,11 +62,23 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
         //fetch rating from the above user
-        ArrayList ratings = restTemplate.getForObject(
+        Rating[] ratings = restTemplate.getForObject(
                 "http://localhost:8083/ratings/users/" + user.getUserId()
-                , ArrayList.class);
+                , Rating[].class);
+        List<Rating> ratingList1 = Arrays.stream(ratings).toList();
         log.info("Ratings for user {}: {}", user.getUserId(), ratings);
-        user.setRatings(ratings);
+        List<Rating> ratingList = ratingList1.stream().map(rating -> {
+            String hotelId = rating.getHotelId();
+            //api call to hotel service to get the hotel
+            ResponseEntity<Hotel> forEntity = restTemplate.getForEntity(
+                    "http://localhost:8082/hotels/" + hotelId,
+                    Hotel.class
+            );
+            Hotel hotel = forEntity.getBody();
+            rating.setHotel(hotel);
+            return rating;
+        }).toList();
+        user.setRatings(ratingList);
         return user;
     }
 
